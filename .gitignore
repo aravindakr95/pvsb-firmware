@@ -1,0 +1,7 @@
+.pio
+CMakeListsPrivate.txt
+cmake-build-*/
+
+# Intellij Cache
+.idea/
+.idea/workspace.xml
