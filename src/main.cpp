@@ -44,7 +44,7 @@ int fetchAPI();
 
 int fetchCOM();
 
-int sendCustomPayload(String);
+int sendPayload(String);
 
 void checkError();
 
@@ -55,8 +55,6 @@ void handleOTA();
 void setup() {
     Serial.begin(115200); //Initialize serial
     delay(3000);
-
-    Serial.print("---- ");
 
     WiFi.mode(WIFI_STA);
 
@@ -118,8 +116,6 @@ void setup() {
 int currentRound = 0;
 
 void loop() {
-    currentRound++;
-
     if (currentRound % requestInterval == 0) {
         int successReadsCount = 0;
 
@@ -163,6 +159,8 @@ void loop() {
     if (currentRound >= 99999) {
         currentRound = 0;
     }
+
+    currentRound++;
 }
 
 int fetchCOM() {} //todo: to be implemented
@@ -202,7 +200,7 @@ int fetchAPI() {
                     httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
 
                     const String payload = http.getString();
-                    state = sendCustomPayload(payload); //if success, state set to 1
+                    state = sendPayload(payload); //if success, state set to 1
                 }
 
                 httpErrorCount = 0;
@@ -226,49 +224,15 @@ int fetchAPI() {
     return state;
 }
 
-int sendCustomPayload(String payload) {
+int sendPayload(String payload) {
     int state = 0;
 
     if (WiFi.status() == WL_CONNECTED) {
-        String payloadJson;
-        String cuPayloadJson;
-
         WiFiClient client;
         HTTPClient http;
 
         const String dataUploadUrl = "http://192.168.1.8:4000/v1/sete/pvsb/payloads?deviceId=" + deviceId;
         const String authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyYXZpbmRhY2xvdWRAZ21haWwuY29tIiwic3VwcGxpZXIiOiJDRUIiLCJhY2NvdW50TnVtYmVyIjo0MzAzMTgwOTMxLCJpYXQiOjE2MDI1MDYzNzN9.u0bcQN2bpPWKBxrBxUrtV4l3vQcBqjfRD8Wi6ObiDow";
-
-//        StaticJsonDocument<1000> PayloadDoc;
-//        DeserializationError error = deserializeJson(PayloadDoc, payload);
-
-//        if (error) {
-//            Serial.print(F("deserializeJson() failed: "));
-//            Serial.println(error.c_str());
-//            return 0;
-//        }
-
-//        StaticJsonDocument<1000> JSONDoc;
-
-//        JSONDoc["deviceId"] = deviceId;
-//        JSONDoc["snapshotTimestamp"] = PayloadDoc["TIME"];
-//        JSONDoc["load"] = PayloadDoc["LOAD"];
-//        JSONDoc["pv"] = PayloadDoc["PV"];
-//        JSONDoc["energyToday"] = PayloadDoc["ENERGY_TODAY"];
-//        JSONDoc["totalEnergy"] = PayloadDoc["ENERGY_TOTAL"];
-//        JSONDoc["importEnergy"] = PayloadDoc["GRID"];
-//        JSONDoc["batteryCapacity"] = float(PayloadDoc["BATTERY_CAPACITY"]);
-//        JSONDoc["chargeCapacity"] = PayloadDoc["CAPACITY_CHARGE"];
-//        JSONDoc["inverterTemp"] = PayloadDoc["TMP"];
-//
-//        JSONDoc["batType"] = PayloadDoc["bat_type"];
-//        JSONDoc["batteryStatus"] = PayloadDoc["bat_type"] ? true : false;
-//
-//        JSONDoc["factoryName"] = PayloadDoc["FACTORY_NAME_EN"];
-//        JSONDoc["inverterModel"] = PayloadDoc["EQUMODEL_NAME"];
-//        JSONDoc["inverterSerial"] = PayloadDoc["INV_SN"];
-//
-//        serializeJson(JSONDoc, cuPayloadJson);
 
         Serial.print("[HTTP](2) begin...\n");
 
@@ -337,12 +301,11 @@ void sendError(String error) {
         WiFiClient client;
         HTTPClient http;
 
-        const String errorUploadUrl = "http://192.168.1.8:4000/v1/sete/pvsb/errors";
+        const String errorUploadUrl = "http://192.168.1.8:4000/v1/sete/pvsb/errors?deviceId=" + deviceId;
         const String authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyYXZpbmRhY2xvdWRAZ21haWwuY29tIiwic3VwcGxpZXIiOiJDRUIiLCJhY2NvdW50TnVtYmVyIjo0MzAzMTgwOTMxLCJpYXQiOjE2MDI1MDYzNzN9.u0bcQN2bpPWKBxrBxUrtV4l3vQcBqjfRD8Wi6ObiDow";
 
         StaticJsonDocument<400> JSONDoc;
 
-        JSONDoc["deviceId"] = deviceId;
         JSONDoc["error"] = error;
         JSONDoc["rssi"] = WiFi.RSSI();
         JSONDoc["wifiFailCount"] = String(wifiErrorCount);
