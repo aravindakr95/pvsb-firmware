@@ -28,7 +28,7 @@ const String deviceId = WiFi.macAddress();
 
 const String fetchMode = "API"; //API, COM
 const int maxErrorCount = 5;
-const int requestInterval = 360; // start looping in every 360 number of current rounds (approx. 6 mins)
+const int requestInterval = 360; // approx. 6
 
 const int ledPinFault = D4;
 const int ledPinTransmit = D6;
