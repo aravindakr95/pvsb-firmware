@@ -24,11 +24,23 @@
 #define LED_LOW LOW
 #define LED_HIGH HIGH
 
+// Define COM Related Variables
+#define SLAVE_ID 0x01
+#define MB_RX 10
+#define MB_TX 11
+#define RTS_PIN 9 // RS485 Direction Control
+#define RS485_TRANSMIT HIGH
+#define RS485_RETRIEVE LOW
+
 const String deviceId = WiFi.macAddress();
 
-const String fetchMode = "API"; //API, COM
+const String fetchMode = "API"; // API, COM
 const int maxErrorCount = 5;
-const int requestInterval = 360; // approx. 6
+const int requestInterval = 360; // approx. 6 (240 requests per day)
+
+const String fetchUrl = "http://apiapp.le-pv.com:8080/api/equipDetail";
+const String serialNumber = "8200331190301002";
+const String associatedEmail = "f5881e4c218a42d3a01219d2adc27661@le-pv.com";
 
 const int ledPinFault = D4;
 const int ledPinTransmit = D6;
@@ -37,7 +49,7 @@ int wifiErrorCount = 0;
 int httpErrorCount = 0;
 int fetchErrorCount = 0;
 
-SoftwareSerial swSerSDM;   //Config SoftwareSerial
+SoftwareSerial RS485Serial(MB_RX, MB_TX); // config RS485Serial
 
 //function prototypes
 int fetchAPI();
@@ -52,8 +64,12 @@ void sendError(String);
 
 void handleOTA();
 
+byte *getSlaveCommand(int);
+
+byte readSlave(int);
+
 void setup() {
-    Serial.begin(115200); //Initialize serial
+    Serial.begin(115200); // initialize serial
     delay(3000);
 
     WiFi.mode(WIFI_STA);
@@ -111,6 +127,10 @@ void setup() {
     handleOTA();
 
     digitalWrite(ledPinFault, LED_LOW);
+
+    // COM Related Configurations
+    pinMode(RTS_PIN, OUTPUT);
+    RS485Serial.begin(9600);
 }
 
 int currentRound = 0;
@@ -152,7 +172,7 @@ void loop() {
         Serial.println("Looping End...");
     }
 
-    delay(1000); //Wait second before next loop
+    delay(1000); // wait second before next loop
 
     ArduinoOTA.handle();
 
@@ -163,7 +183,29 @@ void loop() {
     currentRound++;
 }
 
-int fetchCOM() {} //todo: to be implemented
+int fetchCOM() {
+    String jsonBody;
+
+    StaticJsonDocument<200> JSONDoc;
+
+    JSONDoc["importEnergy"] = String(readSlave(0));
+    JSONDoc["load"] = String(readSlave(1));
+    JSONDoc["pv"] = String(readSlave(2));
+    JSONDoc["energyToday"] = String(readSlave(3));
+    JSONDoc["totalEnergy"] = String(readSlave(4));
+    JSONDoc["batterCapacity"] = String(readSlave(5));
+    JSONDoc["chargeCapacity"] = String(readSlave(6));
+    JSONDoc["inverterTemp"] = String(readSlave(7));
+    JSONDoc["batType"] = String(readSlave(8));
+    JSONDoc["batStatus"] = String(readSlave(9));
+    JSONDoc["factoryName"] = String(readSlave(10));
+    JSONDoc["inverterModel"] = String(readSlave(11));
+    JSONDoc["inverterSN"] = String(readSlave(12));
+
+    serializeJson(JSONDoc, jsonBody);
+
+    return sendPayload(jsonBody);
+}
 
 int fetchAPI() {
     int state = 0;
@@ -176,18 +218,16 @@ int fetchAPI() {
 
         String jsonBody;
 
-        const String dataFetchUrl = "http://192.168.1.8:3334/api/equipDetail";
-
         StaticJsonDocument<200> JSONDoc;
 
-        JSONDoc["SN"] = "8200331190301002";
-        JSONDoc["email"] = "f5881e4c218a42d3a01219d2adc27661@le-pv.com";
+        JSONDoc["SN"] = serialNumber;
+        JSONDoc["email"] = associatedEmail;
 
         serializeJson(JSONDoc, jsonBody);
 
         Serial.print("[HTTP](1) begin...\n");
 
-        const bool isPosted = http.begin(client, dataFetchUrl);
+        const bool isPosted = http.begin(client, fetchUrl);
         http.addHeader("Content-Type", "application/json");
 
         if (isPosted) {
@@ -200,7 +240,7 @@ int fetchAPI() {
                     httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
 
                     const String payload = http.getString();
-                    state = sendPayload(payload); //if success, state set to 1
+                    state = sendPayload(payload); // if success, state set to 1
                 }
 
                 httpErrorCount = 0;
@@ -397,4 +437,102 @@ void handleOTA() {
     Serial.println("OTA Ready");
     Serial.print(F("IPV4 Address: "));
     Serial.println(WiFi.localIP());
+}
+
+byte readSlave(int param) {
+    digitalWrite(RTS_PIN, RS485_TRANSMIT); // init Transmit
+
+    byte *request;
+    byte readingBuffer[8];
+
+    request = getSlaveCommand(param);
+
+    RS485Serial.write(request, sizeof(request));
+    RS485Serial.flush();
+
+    digitalWrite(RTS_PIN, RS485_RETRIEVE); // init receive
+    RS485Serial.readBytes(readingBuffer, 8);
+
+    Serial.print("Reading: ");
+    for (byte i = 0; i < 7; i++) {
+        Serial.print(readingBuffer[i], HEX);
+        Serial.print(" ");
+    }
+    Serial.print(" ==> ");
+    Serial.print(readingBuffer[4]);
+    Serial.println();
+
+    delay(1000);
+}
+
+byte *getSlaveCommand(int param) {
+    switch (param) {
+        case 0: {
+            // importEnergyW
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x02, 0x00, 0x02, 0x65, 0xCB};
+            return output;
+        }
+        case 1: {
+            // load
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x02, 0x00, 0x02, 0x65, 0xCB};
+            return output;
+        }
+        case 2: {
+            // pvGenerated
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x04, 0x00, 0x02, 0x85, 0xCA};
+            return output;
+        }
+        case 3: {
+            // energyToday
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x06, 0x00, 0x02, 0x24, 0x0A};
+            break;
+        }
+        case 4: {
+            // totalEnergy
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x08, 0x00, 0x02, 0x45, 0xC9};
+            return output;
+        }
+        case 5: {
+            // batteryCapacity
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x0A, 0x00, 0x02, 0xE4, 0x09};
+            return output;
+        }
+        case 6: {
+            // chargeCapacity
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x0C, 0x00, 0x02, 0x04, 0x08};
+            return output;
+        }
+        case 7: {
+            // inverterTemp
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x0E, 0x00, 0x02, 0xA5, 0xC8};
+            return output;
+        }
+        case 8: {
+            // batType
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x10, 0x00, 0x02, 0xC5, 0xCE};
+            return output;
+        }
+        case 9: {
+            // batteryStatus
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x12, 0x00, 0x02, 0x64, 0x0E};
+            return output;
+        }
+        case 10: {
+            // factoryName
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x14, 0x00, 0x02, 0x84, 0x0F};
+            return output;
+        }
+        case 11: {
+            // inverterModel
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x16, 0x00, 0x02, 0x25, 0xCF};
+            return output;
+        }
+        case 12: {
+            // inverterSN
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x12, 0x00, 0x02, 0x64, 0x0E};
+            return output;
+        }
+        default:
+            byte output[0] = {};
+    }
 }
