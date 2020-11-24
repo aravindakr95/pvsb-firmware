@@ -2,7 +2,7 @@
  * Photo-Voltaic Statistics Broadcaster Firmware (PVSB)
  * -----------------------------------------------------
  *
- * 2020 NIB303COM Individual Project, National Institute of Business Management (affiliated with Coventry University, UK)
+ * 2020 NIB303COM Individual Project, National Institute of Business Management (affiliated with Coventry University, England)
  * @author: Aravinda Rathnayake
  */
 
@@ -24,19 +24,19 @@
 #define LED_LOW LOW
 #define LED_HIGH HIGH
 
-// Define COM Related Variables
+//Define COM Related Variables
 #define SLAVE_ID 0x01
 #define MB_RX 10
 #define MB_TX 11
-#define RTS_PIN 9 // RS485 Direction Control
+#define RTS_PIN 9 //RS485 Direction Control
 #define RS485_TRANSMIT HIGH
 #define RS485_RETRIEVE LOW
 
 const String deviceId = WiFi.macAddress();
 
-const String fetchMode = "API"; // API, COM
+const String fetchMode = "API"; //API, COM
 const int maxErrorCount = 5;
-const int requestInterval = 360; // approx. 6 (240 requests per day)
+const int requestInterval = 360; //approx. 6 (240 requests per day)
 
 const String fetchUrl = "http://apiapp.le-pv.com:8080/api/equipDetail";
 const String serialNumber = "8200331190301002";
@@ -49,7 +49,7 @@ int wifiErrorCount = 0;
 int httpErrorCount = 0;
 int fetchErrorCount = 0;
 
-SoftwareSerial RS485Serial(MB_RX, MB_TX); // config RS485Serial
+SoftwareSerial RS485Serial(MB_RX, MB_TX); //config RS485Serial
 
 //function prototypes
 int fetchAPI();
@@ -69,7 +69,7 @@ byte *getSlaveCommand(int);
 byte readSlave(int);
 
 void setup() {
-    Serial.begin(115200); // initialize serial
+    Serial.begin(115200); //initialize serial
     delay(3000);
 
     WiFi.mode(WIFI_STA);
@@ -440,7 +440,7 @@ void handleOTA() {
 }
 
 byte readSlave(int param) {
-    digitalWrite(RTS_PIN, RS485_TRANSMIT); // init Transmit
+    digitalWrite(RTS_PIN, RS485_TRANSMIT); //init Transmit
 
     byte *request;
     byte readingBuffer[8];
@@ -468,67 +468,67 @@ byte readSlave(int param) {
 byte *getSlaveCommand(int param) {
     switch (param) {
         case 0: {
-            // importEnergyW
+            //importEnergyW
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x02, 0x00, 0x02, 0x65, 0xCB};
             return output;
         }
         case 1: {
-            // load
+            //load
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x02, 0x00, 0x02, 0x65, 0xCB};
             return output;
         }
         case 2: {
-            // pvGenerated
+            //pvGenerated
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x04, 0x00, 0x02, 0x85, 0xCA};
             return output;
         }
         case 3: {
-            // energyToday
+            //energyToday
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x06, 0x00, 0x02, 0x24, 0x0A};
             break;
         }
         case 4: {
-            // totalEnergy
+            //totalEnergy
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x08, 0x00, 0x02, 0x45, 0xC9};
             return output;
         }
         case 5: {
-            // batteryCapacity
+            //batteryCapacity
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x0A, 0x00, 0x02, 0xE4, 0x09};
             return output;
         }
         case 6: {
-            // chargeCapacity
+            //chargeCapacity
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x0C, 0x00, 0x02, 0x04, 0x08};
             return output;
         }
         case 7: {
-            // inverterTemp
+            //inverterTemp
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x0E, 0x00, 0x02, 0xA5, 0xC8};
             return output;
         }
         case 8: {
-            // batType
+            //batType
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x10, 0x00, 0x02, 0xC5, 0xCE};
             return output;
         }
         case 9: {
-            // batteryStatus
+            //batteryStatus
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x12, 0x00, 0x02, 0x64, 0x0E};
             return output;
         }
         case 10: {
-            // factoryName
+            //factoryName
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x14, 0x00, 0x02, 0x84, 0x0F};
             return output;
         }
         case 11: {
-            // inverterModel
+            //inverterModel
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x16, 0x00, 0x02, 0x25, 0xCF};
             return output;
         }
         case 12: {
-            // inverterSN
+            //inverterSN
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x12, 0x00, 0x02, 0x64, 0x0E};
             return output;
         }
