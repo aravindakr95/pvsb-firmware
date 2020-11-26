@@ -2,7 +2,7 @@
  * Photo-Voltaic Statistics Broadcaster Firmware (PVSB)
  * -----------------------------------------------------
  *
- * 2020 NIB303COM Individual Project, National Institute of Business Management (affiliated with Coventry University, England)
+ * 2020© NIB303COM Individual Project, National Institute of Business Management (affiliated with Coventry University, England)
  * @author: Aravinda Rathnayake
  */
 
@@ -56,7 +56,7 @@ int fetchAPI();
 
 int fetchCOM();
 
-int sendPayload(String);
+int sendPayload(String, String);
 
 void checkError();
 
@@ -188,23 +188,30 @@ int fetchCOM() {
 
     StaticJsonDocument<200> JSONDoc;
 
-    JSONDoc["importEnergy"] = String(readSlave(0));
-    JSONDoc["load"] = String(readSlave(1));
-    JSONDoc["pv"] = String(readSlave(2));
-    JSONDoc["energyToday"] = String(readSlave(3));
-    JSONDoc["totalEnergy"] = String(readSlave(4));
-    JSONDoc["batterCapacity"] = String(readSlave(5));
-    JSONDoc["chargeCapacity"] = String(readSlave(6));
-    JSONDoc["inverterTemp"] = String(readSlave(7));
-    JSONDoc["batType"] = String(readSlave(8));
-    JSONDoc["batStatus"] = String(readSlave(9));
-    JSONDoc["factoryName"] = String(readSlave(10));
-    JSONDoc["inverterModel"] = String(readSlave(11));
-    JSONDoc["inverterSN"] = String(readSlave(12));
+    JsonObject results = JSONDoc.createNestedObject("results");
+
+    JSONDoc["isOwn"] = true;
+    JSONDoc["success"] = true;
+    JSONDoc["messageCode"] = NULL;
+
+    results["GRID"] = float(readSlave(0));
+    results["LOAD"] = float(readSlave(1));
+    results["PV"] = float(readSlave(2));
+    results["ENERGY_TODAY"] = float(readSlave(3));
+    results["ENERGY_TOTAL"] = float(readSlave(4));
+    results["BATTERY_CAPACITY"] = String(readSlave(5));
+    results["CAPACITY_CHARGE"] = float(readSlave(6));
+    results["TMP"] = float(readSlave(7));
+    results["bat_type"] = int(readSlave(8));
+    results["FACTORY_NAME_EN"] = String(readSlave(9));
+    results["EQUMODEL_NAME"] = String(readSlave(10));
+    results["INV_SN"] = String(readSlave(11));
 
     serializeJson(JSONDoc, jsonBody);
 
-    return sendPayload(jsonBody);
+    Serial.println(jsonBody);
+
+    return sendPayload(jsonBody, "COM");
 }
 
 int fetchAPI() {
@@ -240,7 +247,7 @@ int fetchAPI() {
                     httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
 
                     const String payload = http.getString();
-                    state = sendPayload(payload); // if success, state set to 1
+                    state = sendPayload(payload, "API"); // if success, state set to 1
                 }
 
                 httpErrorCount = 0;
@@ -264,14 +271,15 @@ int fetchAPI() {
     return state;
 }
 
-int sendPayload(String payload) {
+int sendPayload(String payload, String fetchMode) {
     int state = 0;
 
     if (WiFi.status() == WL_CONNECTED) {
         WiFiClient client;
         HTTPClient http;
 
-        const String dataUploadUrl = "http://192.168.1.8:4000/v1/sete/pvsb/payloads?deviceId=" + deviceId;
+        const String dataUploadUrl =
+                "http://192.168.1.8:4000/v1/sete/pvsb/payloads?deviceId=" + deviceId + "&fetchMode=" + fetchMode;
         const String authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyYXZpbmRhY2xvdWRAZ21haWwuY29tIiwic3VwcGxpZXIiOiJDRUIiLCJhY2NvdW50TnVtYmVyIjo0MzAzMTgwOTMxLCJpYXQiOjE2MDI1MDYzNzN9.u0bcQN2bpPWKBxrBxUrtV4l3vQcBqjfRD8Wi6ObiDow";
 
         Serial.print("[HTTP](2) begin...\n");
@@ -469,7 +477,7 @@ byte *getSlaveCommand(int param) {
     switch (param) {
         case 0: {
             //importEnergyW
-            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x02, 0x00, 0x02, 0x65, 0xCB};
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x00, 0x00, 0x02, 0xC4, 0x0B};
             return output;
         }
         case 1: {
@@ -513,23 +521,18 @@ byte *getSlaveCommand(int param) {
             return output;
         }
         case 9: {
-            //batteryStatus
+            //factoryName
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x12, 0x00, 0x02, 0x64, 0x0E};
             return output;
         }
         case 10: {
-            //factoryName
+            //inverterModel
             byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x14, 0x00, 0x02, 0x84, 0x0F};
             return output;
         }
         case 11: {
-            //inverterModel
-            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x16, 0x00, 0x02, 0x25, 0xCF};
-            return output;
-        }
-        case 12: {
             //inverterSN
-            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x12, 0x00, 0x02, 0x64, 0x0E};
+            byte output[8] = {SLAVE_ID, 0x03, 0x00, 0x16, 0x00, 0x02, 0x25, 0xCF};
             return output;
         }
         default:
