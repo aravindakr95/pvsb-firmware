@@ -34,7 +34,7 @@
 
 const String deviceId = WiFi.macAddress();
 
-const String fetchMode = "API"; //API, COM
+const String fetchMode = "COM"; //API, COM
 const int maxErrorCount = 5;
 const int requestInterval = 360; //approx. 6 (240 requests per day)
 
@@ -186,7 +186,7 @@ void loop() {
 int fetchCOM() {
     String jsonBody;
 
-    StaticJsonDocument<200> JSONDoc;
+    StaticJsonDocument<400> JSONDoc;
 
     JsonObject results = JSONDoc.createNestedObject("results");
 
@@ -208,8 +208,6 @@ int fetchCOM() {
     results["INV_SN"] = String(readSlave(11));
 
     serializeJson(JSONDoc, jsonBody);
-
-    Serial.println(jsonBody);
 
     return sendPayload(jsonBody, "COM");
 }
@@ -241,7 +239,7 @@ int fetchAPI() {
             int httpCode = http.POST(jsonBody);
 
             if (httpCode > 0) {
-                Serial.printf("[HTTP](1) GET... code: %d\n", httpCode);
+                Serial.printf("[HTTP](1) POST... code: %d\n", httpCode);
 
                 if (httpCode == HTTP_CODE_OK ||
                     httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
@@ -252,7 +250,7 @@ int fetchAPI() {
 
                 httpErrorCount = 0;
             } else {
-                Serial.printf("[HTTP](1) GET... failed, error: %s\n",
+                Serial.printf("[HTTP](1) POST... failed, error: %s\n",
                               http.errorToString(httpCode).c_str());
             }
 
@@ -293,7 +291,7 @@ int sendPayload(String payload, String fetchMode) {
             int httpCode = http.POST(payload);
 
             if (httpCode > 0) {
-                Serial.printf("[HTTP](2) GET... code: %d\n", httpCode);
+                Serial.printf("[HTTP](2) POST... code: %d\n", httpCode);
                 if (httpCode == HTTP_CODE_OK ||
                     httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
                     state = 1;
@@ -301,7 +299,7 @@ int sendPayload(String payload, String fetchMode) {
 
                 httpErrorCount = 0;
             } else {
-                Serial.printf("[HTTP](2) GET... failed, error: %s\n",
+                Serial.printf("[HTTP](2) POST... failed, error: %s\n",
                               http.errorToString(httpCode).c_str());
             }
 
