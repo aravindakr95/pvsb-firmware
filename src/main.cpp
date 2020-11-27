@@ -34,7 +34,7 @@
 
 const String deviceId = WiFi.macAddress();
 
-const String fetchMode = "COM"; //API, COM
+const String fetchMode = "API"; //API, COM
 const int maxErrorCount = 5;
 const int requestInterval = 360; //approx. 6 (240 requests per day)
 
@@ -277,8 +277,8 @@ int sendPayload(String payload, String fetchMode) {
         HTTPClient http;
 
         const String dataUploadUrl =
-                "http://192.168.1.8:4000/v1/sete/pvsb/payloads?deviceId=" + deviceId + "&fetchMode=" + fetchMode;
-        const String authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyYXZpbmRhY2xvdWRAZ21haWwuY29tIiwic3VwcGxpZXIiOiJDRUIiLCJhY2NvdW50TnVtYmVyIjo0MzAzMTgwOTMxLCJpYXQiOjE2MDI1MDYzNzN9.u0bcQN2bpPWKBxrBxUrtV4l3vQcBqjfRD8Wi6ObiDow";
+                "https://sete.brilliant-apps.club/v1/sete/pvsb/payloads?deviceId=" + deviceId + "&fetchMode=" + fetchMode;
+        const String authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyYXZpbmRhY2xvdWRAZ21haWwuY29tIiwiYWNjb3VudE51bWJlciI6NDMwMzM4MDkxMiwiaWF0IjoxNjA2NDkxNDU5fQ.DqiQY2Gplu055QkajqVnRTZUPyTp7rGb_92KNsUmr3Y";
 
         Serial.print("[HTTP](2) begin...\n");
 
