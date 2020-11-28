@@ -277,7 +277,7 @@ int sendPayload(String payload, String fetchMode) {
         HTTPClient http;
 
         const String dataUploadUrl =
-                "https://sete.brilliant-apps.club/v1/sete/pvsb/payloads?deviceId=" + deviceId + "&fetchMode=" + fetchMode;
+                "http://sete.brilliant-apps.club/v1/sete/pvsb/payloads?deviceId=" + deviceId + "&fetchMode=" + fetchMode;
         const String authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyYXZpbmRhY2xvdWRAZ21haWwuY29tIiwiYWNjb3VudE51bWJlciI6NDMwMzM4MDkxMiwiaWF0IjoxNjA2NDkxNDU5fQ.DqiQY2Gplu055QkajqVnRTZUPyTp7rGb_92KNsUmr3Y";
 
         Serial.print("[HTTP](2) begin...\n");
