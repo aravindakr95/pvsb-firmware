@@ -2,7 +2,6 @@
  * Photo-Voltaic Statistics Broadcaster Firmware (PVSB)
  * -----------------------------------------------------
  *
- * 2020© NIB303COM Individual Project, National Institute of Business Management (affiliated with Coventry University, England)
  * @author: Aravinda Rathnayake
  */
 
@@ -18,8 +17,8 @@
 
 #include <ArduinoJson.h>
 
-#define WIFI_SSID "Fibre-IoT" //todo: think way to configure wifi details on demand (wifi manager)
-#define WIFI_SECRET "iot@4567"
+#define WIFI_SSID "WIFI_SSID" //todo: think way to configure wifi details on demand (wifi manager)
+#define WIFI_SECRET "WIFI_SECRET"
 
 #define LED_LOW LOW
 #define LED_HIGH HIGH
@@ -38,9 +37,9 @@ const String fetchMode = "API"; //API, COM
 const int maxErrorCount = 5;
 const int requestInterval = 360; //approx. 6 (240 requests per day)
 
-const String fetchUrl = "http://apiapp.le-pv.com:8080/api/equipDetail";
-const String serialNumber = "8200331190301002";
-const String associatedEmail = "f5881e4c218a42d3a01219d2adc27661@le-pv.com";
+const String fetchUrl = "http://sampleapi.pvinverter.com:8080/api/equipDetail";
+const String serialNumber = "45436979550500";
+const String associatedEmail = "1234@pvinverter.com";
 
 const int ledPinFault = D4;
 const int ledPinTransmit = D6;
@@ -277,8 +276,8 @@ int sendPayload(String payload, String fetchMode) {
         HTTPClient http;
 
         const String dataUploadUrl =
-                "http://sete.brilliant-apps.club/v1/sete/pvsb/payloads?deviceId=" + deviceId + "&fetchMode=" + fetchMode;
-        const String authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyYXZpbmRhY2xvdWRAZ21haWwuY29tIiwiYWNjb3VudE51bWJlciI6NDMwMzM4MDkxMiwiaWF0IjoxNjA2NDkxNDU5fQ.DqiQY2Gplu055QkajqVnRTZUPyTp7rGb_92KNsUmr3Y";
+                "http://sete.example.com/v1/sete/pvsb/payloads?deviceId=" + deviceId + "&fetchMode=" + fetchMode;
+        const String authToken = "CONSUMER_AUTH_TOKEN";
 
         Serial.print("[HTTP](2) begin...\n");
 
@@ -347,8 +346,8 @@ void sendError(String error) {
         WiFiClient client;
         HTTPClient http;
 
-        const String errorUploadUrl = "https://sete.brilliant-apps.club/v1/sete/pvsb/errors?deviceId=" + deviceId;
-        const String authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyYXZpbmRhY2xvdWRAZ21haWwuY29tIiwiYWNjb3VudE51bWJlciI6NDMwMzM4MDkxMiwiaWF0IjoxNjA2NDkxNDU5fQ.DqiQY2Gplu055QkajqVnRTZUPyTp7rGb_92KNsUmr3Y";
+        const String errorUploadUrl = "http://sete.example.com/v1/sete/pvsb/errors?deviceId=" + deviceId;
+        const String authToken = "CONSUMER_AUTH_TOKEN";
 
         StaticJsonDocument<400> JSONDoc;
 
@@ -401,7 +400,7 @@ void sendError(String error) {
 }
 
 void handleOTA() {
-    ArduinoOTA.setPasswordHash("8048dff8fe79031bfc7a0e84f539620c");
+    ArduinoOTA.setPasswordHash("PW_HASH");
 
     ArduinoOTA.onStart([]() {
         String type;
